@@ -61,11 +61,12 @@ def _extract_argmax_and_embed(embedding, output_projection=None,
 class Seq2SeqAttentionModel(object):
   """Wrapper for Tensorflow model graph for text sum vectors."""
 
-  def __init__(self, hps, vocab, num_gpus=0):
+  def __init__(self, hps, vocab, pt_wordvec_matrix=None, num_gpus=0):
     self._hps = hps
     self._vocab = vocab
     self._num_gpus = num_gpus
     self._cur_gpu = 0
+    self._pt_wordvec_matrix = pt_wordvec_matrix
 
   def run_train_step(self, sess, article_batch, abstract_batch, targets,
                      article_lens, abstract_lens, loss_weights):
@@ -147,9 +148,13 @@ class Seq2SeqAttentionModel(object):
 
       # Embedding shared by the input and outputs.
       with tf.variable_scope('embedding'), tf.device('/cpu:0'):
-        embedding = tf.get_variable(
-            'embedding', [vsize, hps.emb_dim], dtype=tf.float32,
-            initializer=tf.truncated_normal_initializer(stddev=1e-4))
+        if self._pt_wordvec_matrix is not None:
+          embedding = tf.get_variable(
+              'embedding', initializer=self._pt_wordvec_matrix)
+        else:
+          embedding = tf.get_variable(
+              'embedding', [vsize, hps.emb_dim], dtype=tf.float32,
+              initializer=tf.truncated_normal_initializer(stddev=1e-4))
         emb_encoder_inputs = [tf.nn.embedding_lookup(embedding, x)
                               for x in encoder_inputs]
         emb_decoder_inputs = [tf.nn.embedding_lookup(embedding, x)

@@ -184,6 +184,9 @@ def main(unused_argv):
       max_grad_norm=2,
       num_softmax_samples=4096)  # If 0, no sampled softmax.
 
+  pt_wordvec_matrix = data.load_pretrained_wordvecs(FLAGS.wordvec_file, hps.emb_dim, vocab) \
+      if FLAGS.wordvec_file else None
+
   batcher = batch_reader.Batcher(
       FLAGS.data_path, vocab, hps, FLAGS.article_key,
       FLAGS.abstract_key, FLAGS.max_article_sentences,
@@ -193,11 +196,11 @@ def main(unused_argv):
 
   if hps.mode == 'train':
     model = seq2seq_attention_model.Seq2SeqAttentionModel(
-        hps, vocab, num_gpus=FLAGS.num_gpus)
+        hps, vocab, pt_wordvec_matrix, num_gpus=FLAGS.num_gpus)
     _Train(model, batcher)
   elif hps.mode == 'eval':
     model = seq2seq_attention_model.Seq2SeqAttentionModel(
-        hps, vocab, num_gpus=FLAGS.num_gpus)
+        hps, vocab, pt_wordvec_matrix, num_gpus=FLAGS.num_gpus)
     _Eval(model, batcher, vocab=vocab)
   elif hps.mode == 'decode':
     decode_mdl_hps = hps
@@ -205,7 +208,7 @@ def main(unused_argv):
     # we keep and feed in state for each step's output.
     decode_mdl_hps = hps._replace(dec_timesteps=1)
     model = seq2seq_attention_model.Seq2SeqAttentionModel(
-        decode_mdl_hps, vocab, num_gpus=FLAGS.num_gpus)
+        decode_mdl_hps, vocab, pt_wordvec_matrix, num_gpus=FLAGS.num_gpus)
     decoder = seq2seq_attention_decode.BSDecoder(model, batcher, hps, vocab)
     decoder.DecodeLoop()
 
