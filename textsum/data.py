@@ -221,7 +221,7 @@ def ToSentences(paragraph, include_token=True):
 
 def load_pretrained_wordvecs(wordvec_file, emb_dim, vocab):
   word2vec_model = Word2Vec.load_word2vec_format(wordvec_file, binary=True)
-  vocab_size = vocab.NumIds() + 1  # NumIds is zero based
+  vocab_size = vocab.NumIds()
 
   orig_vec_len = len(list(vocab._word_to_id.itervalues())[0])
   W_pt = np.zeros(shape=(orig_vec_len, len(vocab._word_to_id)), dtype='float32')
@@ -240,13 +240,3 @@ def load_pretrained_wordvecs(wordvec_file, emb_dim, vocab):
   W[id_list] = W_pt
 
   return W
-
-
-def load_wordvecs_from_file(wordvec_file):
-  wordvec_dict = pickle.load(open(wordvec_file, 'rb'))
-  prev_vec = None
-  for word, vector in wordvec_dict.iteritems():
-    if prev_vec is not None and len(vector) != len(prev_vec):
-      raise ValueError("Vector lengths from file not all the same")
-    prev_vec = vector
-  return wordvec_dict, len(vector)
