@@ -223,13 +223,14 @@ def load_pretrained_wordvecs(wordvec_file, emb_dim, vocab):
   word2vec_model = Word2Vec.load_word2vec_format(wordvec_file, binary=True)
   vocab_size = vocab.NumIds()
 
-  orig_vec_len = len(list(vocab._word_to_id.itervalues())[0])
-  W_pt = np.zeros(shape=(orig_vec_len, len(vocab._word_to_id)), dtype='float32')
-
+  W_pt_list = []
   id_list = []
   for idx, (word, _id) in enumerate(vocab._word_to_id.iteritems()):
-    W_pt[:, idx] = word2vec_model[word]
-    id_list.append(_id)
+    if word in word2vec_model:
+      W_pt_list.append(word2vec_model[word])
+      id_list.append(_id)
+
+  W_pt = np.array([np.array(xi) for xi in W_pt_list]).astype('float32').transpose()
 
   pca = PCA(n_components=emb_dim)
   pca.fit(W_pt)
